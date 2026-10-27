@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adam Product — Прототипы UI (3 экрана x 3 разрешения)</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-light: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --border-color: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+    body {
+      background-color: #111827;
+      color: #f3f4f6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .control-panel {
+      background-color: #1f2937;
+      border-bottom: 2px solid #374151;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-label {
+      font-size: 13px;
+      color: #9ca3af;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-toggle {
+      background-color: #374151;
+      color: #d1d5db;
+      border: 1px solid #4b5563;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-toggle:hover {
+      background-color: #4b5563;
+      color: #ffffff;
+    }
+
+    .btn-toggle.active {
+      background-color: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+
+    .viewport-stage {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: auto;
+      background: radial-gradient(circle at center, #1f2937 0%, #111827 100%);
+    }
+
+    .device-frame {
+      background-color: #ffffff;
+      color: var(--text-main);
+      border-radius: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transition: width 0.3s ease, min-height 0.3s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
+    }
+
+    .res-mobile { width: 390px; min-height: 700px; border: 8px solid #374151; border-radius: 24px; }
+    .res-tablet { width: 768px; min-height: 800px; border: 10px solid #374151; border-radius: 16px; }
+    .res-desktop { width: 1280px; min-height: 850px; border: 1px solid #374151; border-radius: 8px; }
+    .res-paper { width: 100%; max-width: 1100px; background: transparent; box-shadow: none; }
+
+    .app-header {
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .app-logo {
+      font-weight: 800;
+      font-size: 18px;
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-nav {
+      display: flex;
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .app-nav a { color: #94a3b8; text-decoration: none; font-weight: 500; }
+    .app-nav a.active { color: #ffffff; border-bottom: 2px solid #818cf8; padding-bottom: 2px; }
+
+    .app-body {
+      padding: 20px;
+      background-color: #f8fafc;
+      flex: 1;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-green { background-color: #d1fae5; color: #065f46; }
+    .badge-amber { background-color: #fef3c7; color: #92400e; }
+    .badge-red { background-color: #fee2e2; color: #991b1b; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+
+    .slot-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .slot-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .slot-btn.disabled { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; cursor: not-allowed; }
+    .slot-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+    .paper-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .paper-wireframe {
+      background: #fff;
+      border: 2px dashed #64748b;
+      border-radius: 8px;
+      padding: 15px;
+      color: #334155;
+    }
+    .paper-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+
+    .res-mobile .app-nav { display: none; }
+    .res-mobile .grid-2, .res-mobile .grid-3 { grid-template-columns: 1fr; }
+  </style>
+</head>
+<body>
+
+  <div class="control-panel">
+    <div class="control-group">
+      <span class="control-label">1. Выбор экрана:</span>
+      <button class="btn-toggle active" onclick="setScreen('screen1', this)">Экран 1: Агрегатор</button>
+      <button class="btn-toggle" onclick="setScreen('screen2', this)">Экран 2: Клуб и Столы</button>
+      <button class="btn-toggle" onclick="setScreen('screen3', this)">Экран 3: Мои события</button>
+      <button class="btn-toggle" onclick="setScreen('paper', this)">📐 Бумажные эскизы</button>
+    </div>
+
+    <div class="control-group" id="res-controls">
+      <span class="control-label">2. Разрешение (Viewport):</span>
+      <button class="btn-toggle" onclick="setResolution('res-mobile', this)">📱 Смартфон (390px)</button>
+      <button class="btn-toggle" onclick="setResolution('res-tablet', this)">📱 Планшет (768px)</button>
+      <button class="btn-toggle active" onclick="setResolution('res-desktop', this)">💻 ПК (1440px)</button>
+    </div>
+  </div>
+
+  <div class="viewport-stage">
+    <div id="device-frame" class="device-frame res-desktop">
+      
+      <div class="app-header" id="app-header">
+        <div class="app-logo">🎲 ADAM GAMES</div>
+        <div class="app-nav">
+          <a href="#" class="active" onclick="event.preventDefault();">Агрегатор</a>
+          <a href="#" onclick="event.preventDefault();">Заведения</a>
+          <a href="#" onclick="event.preventDefault();">Мои события</a>
+          <a href="#" onclick="event.preventDefault();">Мои чаты</a>
+        </div>
+        <div style="font-size: 13px; color: #cbd5e1;">Иван И. (Игрок)</div>
+      </div>
+
+      <div class="app-body" id="app-content">
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentScreen = 'screen1';
+    let currentRes = 'res-desktop';
+
+    function setScreen(screen, btn) {
+      currentScreen = screen;
+      document.querySelectorAll('.control-group:nth-child(1) .btn-toggle').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const resGroup = document.getElementById('res-controls');
+      if (screen === 'paper') {
+        resGroup.style.opacity = '0.3';
+        resGroup.style.pointerEvents = 'none';
+        setResolution('res-paper', null);
+      } else {
+        resGroup.style.opacity = '1';
+        resGroup.style.pointerEvents = 'auto';
+        if (currentRes === 'res-paper') setResolution('res-desktop', document.querySelectorAll('#res-controls .btn-toggle')[2]);
+      }
+      render();
+    }
+
+    function setResolution(resClass, btn) {
+      if (!resClass) return;
+      currentRes = resClass;
+      const frame = document.getElementById('device-frame');
+      frame.className = 'device-frame ' + resClass;
+      if (btn) {
+        document.querySelectorAll('#res-controls .btn-toggle').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      render();
+    }
+
+    function render() {
+      const content = document.getElementById('app-content');
+      const header = document.getElementById('app-header');
+
+      if (currentScreen === 'paper') {
+        header.style.display = 'none';
+        content.innerHTML = renderPaperPrototypes();
+        return;
+      }
+
+      header.style.display = 'flex';
+
+      if (currentScreen === 'screen1') {
+        content.innerHTML = renderScreen1();
+      } else if (currentScreen === 'screen2') {
+        content.innerHTML = renderScreen2();
+      } else if (currentScreen === 'screen3') {
+        content.innerHTML = renderScreen3();
+      }
+    }
+
+    function renderScreen1() {
+      return `
+        <div style="margin-bottom: 15px;">
+          <h2 style="font-size: 18px; margin-bottom: 5px;">Поиск сборов и открытых партий (LFG)</h2>
+          <p style="font-size: 13px; color: var(--text-muted);">Найдите компанию для игры в антикафе вашего города</p>
+        </div>
+
+        <div class="card" style="display: flex; gap: 10px; flex-wrap: wrap; background: #fff;">
+          <input type="text" placeholder="Поиск по игре или клубу..." style="flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;">
+          <select style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;"><option>Город: Минск</option></select>
+          <select style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px;"><option>Дата: Сегодня</option></select>
+          <button style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Найти</button>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div style="display: justify; justify-content: space-between; align-items: center;">
+              <span class="badge badge-green">🟢 Кворум набран</span>
+              <span style="font-size: 12px; color: var(--text-muted);">Сегодня, 18:00 - 21:00</span>
+            </div>
+            <h3 style="font-size: 16px; margin: 8px 0;">Новички в "Дюну: Империум"</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">Клуб: <b>Hobby Club</b> (ул. Немига, 5)</p>
+            <div style="margin: 12px 0; font-size: 13px;">
+              <b>Участники:</b> 3 / 4 человек [👤👤👤⚪]
+            </div>
+            <button style="width: 100%; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer;" onclick="alert('Вы успешно присоединились к сбору!')">Присоединиться</button>
+          </div>
+
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="badge badge-amber">🟡 Нужен +1 до T-3ч</span>
+              <span style="font-size: 12px; color: var(--text-muted);">Завтра, 19:00 - 22:00</span>
+            </div>
+            <h3 style="font-size: 16px; margin: 8px 0;">Catan (Колонизаторы) Hardcore</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">Клуб: <b>PlayRoom</b> (пр. Независимости, 40)</p>
+            <div style="margin: 12px 0; font-size: 13px;">
+              <b>Участники:</b> 2 / 4 человек [👤👤⚪⚪]
+            </div>
+            <button style="width: 100%; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer;">Присоединиться</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScreen2() {
+      return `
+        <div class="card" style="background: #1e293b; color: white;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+            <div>
+              <h2 style="font-size: 20px;">Клуб настольных игр "Hobby Club"</h2>
+              <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">📍 ул. Немига, 5, Минск | 📞 +375 (29) 111-22-33</p>
+              <p style="font-size: 12px; color: #cbd5e1; margin-top: 2px;">Режим работы: 12:00 - 23:00 (слоты строго :00)</p>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 18px; color: #f59e0b; font-weight: bold;">⭐ 4.8</span>
+              <div style="font-size: 11px; color: #94a3b8;">32 отзыва</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 15px; margin-bottom: 10px;">Бронирование стола на сегодня:</h3>
+        <div class="card">
+          <div style="font-size: 14px; font-weight: bold; margin-bottom: 6px;">Стол №1 (до 6 чел)</div>
+          <div class="slot-grid">
+            <span class="slot-btn">12:00</span>
+            <span class="slot-btn">13:00</span>
+            <span class="slot-btn disabled">14:00 (Занято)</span>
+            <span class="slot-btn disabled">15:00 (Занято)</span>
+            <span class="slot-btn selected">18:00</span>
+            <span class="slot-btn selected">19:00</span>
+            <span class="slot-btn selected">20:00</span>
+            <span class="slot-btn">21:00</span>
+          </div>
+
+          <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Прикрепить игры из наличия (до 2 шт, бесплатно):</div>
+            <label style="display: block; font-size: 13px; margin-bottom: 5px;"><input type="checkbox" checked> Dune: Imperium <span class="badge badge-green">В наличии: 1 шт</span></label>
+            <label style="display: block; font-size: 13px;"><input type="checkbox"> Catan <span class="badge badge-green">В наличии: 2 шт</span></label>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button style="flex: 1; background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">Забронировать стол</button>
+            <button style="flex: 1; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">Создать партию (LFG)</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScreen3() {
+      return `
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <button style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">Предстоящие (2)</button>
+          <button style="background: #e2e8f0; color: #475569; border: none; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;">История / Архив</button>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--primary);">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="badge badge-green">Партия (Вы создатель)</span>
+            <span style="font-size: 12px; color: var(--text-muted);">Сегодня, 18:00 - 21:00</span>
+          </div>
+          <h3 style="font-size: 16px; margin: 8px 0;">Дюна: Империум</h3>
+          <p style="font-size: 13px; color: var(--text-muted);">Клуб Hobby Club | Стол №1</p>
+          
+          <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 12px; color: #475569;">
+            <b>Участники (3/4):</b><br>
+            1. Иван И. (Вы) - Лидер<br>
+            2. Алексей М.<br>
+            3. Ольга К.<br>
+            ⚠️ <i>Правило T-3ч: До игры осталось более 3 часов. Отмена бесплатная.</i>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button style="background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Открыть чат партии</button>
+            <button style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;" onclick="confirm('Отменить бронь?')">Отменить сбор</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPaperPrototypes() {
+      return `
+        <div class="paper-container">
+          <div class="paper-wireframe">
+            <div class="paper-title">Бумажный эскиз №1: Агрегатор LFG</div>
+            <div style="font-family: monospace; font-size: 11px; white-space: pre; line-height: 1.2; color: #000;">
++-----------------------------------+
+| [ADAM]  [Поиск...]     (Профиль)  |
++-----------------------------------+
+| Фильтры: [Минск v] [Сегодня v]     |
+| [Т] Открытые партии | Клубы       |
++-----------------------------------+
+|  +-----------------------------+  |
+|  | "Дюна" (3/4)  🟢 Кворум     |  |
+|  | Hobby Club, 18:00-21:00     |  |
+|  | [ Кнопка: Вступить ]        |  |
+|  +-----------------------------+  |
+|  +-----------------------------+  |
+|  | "Catan" (2/4) 🟡 Нужен +1   |  |
+|  | [ Кнопка: Вступить ]        |  |
+|  +-----------------------------+  |
++-----------------------------------+
+            </div>
+          </div>
+
+          <div class="paper-wireframe">
+            <div class="paper-title">Бумажный эскиз №2: Карточка Клуба</div>
+            <div style="font-family: monospace; font-size: 11px; white-space: pre; line-height: 1.2; color: #000;">
++-----------------------------------+
+| <- Назад          ⭐ 4.8 (32)     |
+| Hobby Club (ул. Немига, 5)        |
++-----------------------------------+
+| Сетка столов (Сегодня):           |
+| Стол №1 (до 6 чел):               |
+| [12:00] [13:00] [18:00*] [19:00*] |
++-----------------------------------+
+| Игры клуба (до 2 шт):             |
+| [x] Дюна (1 шт)                   |
+| [ ] Колонизаторы (2 шт)           |
++-----------------------------------+
+| [Забронировать] [Создать партию]  |
++-----------------------------------+
+            </div>
+          </div>
+
+          <div class="paper-wireframe">
+            <div class="paper-title">Бумажный эскиз №3: Мои события</div>
+            <div style="font-family: monospace; font-size: 11px; white-space: pre; line-height: 1.2; color: #000;">
++-----------------------------------+
+| МОИ СОБЫТИЯ                       |
+| [[ Предстоящие ]]  [ Архив ]      |
++-----------------------------------+
+| +-------------------------------+ |
+| | Дюна: Империум (Лидер)        | |
+| | Сегодня, 18:00 - 21:00        | |
+| | Участники: 3/4                | |
+| | ⚠️ T-3 ч: Отмена без штрафа   | |
+| | [ Чат партии ]  [ Отменить ]  | |
+| +-------------------------------+ |
++-----------------------------------+
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    render();
+  </script>
+</body>
+</html>
